@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="am">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Earn & Play Mini App</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style> body { background: #0f172a; color: #fff; font-family: sans-serif; } </style>
+</head>
+<body class="flex flex-col min-h-screen justify-between p-4 relative">
+
+  <!-- 1. CHANNEL SUBSCRIPTION LOCK MODAL -->
+  <div id="subModal" class="fixed inset-0 bg-slate-950/95 z-50 flex flex-col items-center justify-center p-6 text-center">
+    <div class="text-6xl mb-4 animate-bounce">📢</div>
+    <h2 class="text-xl font-bold mb-2">ቻናላችንን መቀላቀል ግዴታ ነው!</h2>
+    <p class="text-sm text-gray-400 mb-6">ወደ ሚኒ አፑ ገብተው ብር መሰብሰብ ለመጀመር መጀመሪያ ዋናውን ቻናላችንን ጆይን ማድረግ አለብዎት።</p>
+    <a href="https://t.me/your_channel_username" target="_blank" class="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-xl font-semibold mb-3 shadow-lg block">
+      ቴሌግራም ቻናል ጆይን አድርግ
+    </a>
+    <button onclick="checkSubscription()" class="w-full bg-green-600 hover:bg-green-500 py-3 rounded-xl font-semibold shadow-lg">
+      ✅ ተቀላቅያለሁ (ግባ)
+    </button>
+  </div>
+
+  <!-- MAIN APP CONTENT -->
+  <div class="space-y-4">
+    <div class="bg-slate-800/80 p-4 rounded-2xl border border-slate-700 flex justify-between items-center shadow-md">
+      <div>
+        <p class="text-xs text-gray-400">የእርስዎ አካውንት ባላንስ</p>
+        <h1 class="text-2xl font-bold text-yellow-400" id="balance">0.00 ETB</h1>
+      </div>
+      <div class="bg-yellow-500/20 text-yellow-300 text-xs px-3 py-1 rounded-full border border-yellow-500/30">VIP 🌟</div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="flex space-x-2 bg-slate-800 p-1 rounded-xl">
+      <button onclick="switchTab('tasks')" id="btn-tasks" class="flex-1 py-2 text-xs font-bold rounded-lg bg-blue-600 text-white transition">ታስኮች</button>
+      <button onclick="switchTab('games')" id="btn-games" class="flex-1 py-2 text-xs font-bold rounded-lg text-gray-400 transition">ስፒን ጌም</button>
+      <button onclick="switchTab('wallet')" id="btn-wallet" class="flex-1 py-2 text-xs font-bold rounded-lg text-gray-400 transition">ዋሌት/ማውጫ</button>
+    </div>
+
+    <!-- TAB 1: TASKS -->
+    <div id="tab-tasks" class="space-y-3">
+      <div class="bg-slate-800/50 p-3 rounded-xl border border-slate-700 flex justify-between items-center">
+        <div><h3 class="font-semibold text-sm">📢 የቴሌግራም ቻናል ጆይን</h3><p class="text-xs text-green-400">+5.00 ETB</p></div>
+        <button onclick="earnReward(5, 'ቻናሉን ጆይን አድርገዋል!')" class="bg-blue-600 text-xs px-3 py-2 rounded-lg font-medium">ሰርራሪ</button>
+      </div>
+      <div class="bg-slate-800/50 p-3 rounded-xl border border-slate-700 flex justify-between items-center">
+        <div><h3 class="font-semibold text-sm">📺 ማስታወቂያ ማየት</h3><p class="text-xs text-purple-400">+2.00 ETB</p></div>
+        <button onclick="earnReward(2, 'ማስታወቂያውን ተመልክተዋል!')" class="bg-purple-600 text-xs px-3 py-2 rounded-lg font-medium">ተመልከት</button>
+      </div>
+    </div>
+
+    <!-- TAB 2: GAMES -->
+    <div id="tab-games" class="hidden text-center py-6 space-y-4">
+      <div class="bg-slate-800/60 p-6 rounded-2xl border border-slate-700">
+        <h3 class="text-lg font-bold mb-2">🎡 ዕድልዎን ይሞክሩ (Spin Wheel)</h3>
+        <div id="spinResult" class="text-xl font-bold text-yellow-400 my-3">🎁 ዞሮ ለመሸለም ዝግጁ ነዉ</div>
+        <button onclick="spinWheel()" class="w-full bg-pink-600 py-3 rounded-xl font-bold shadow-lg">አሁን አሽከርክር</button>
+      </div>
+    </div>
+
+    <!-- TAB 3: WALLET -->
+    <div id="tab-wallet" class="hidden space-y-4">
+      <div class="bg-slate-800/60 p-4 rounded-2xl border border-slate-700 space-y-3">
+        <h3 class="font-bold text-sm">💳 የብር ማውጫ (Withdrawal)</h3>
+        <input type="text" placeholder="የቴሌብር / ባንክ አካውንት ቁጥር" class="w-full bg-slate-900 border border-slate-700 p-3 rounded-xl text-xs text-white outline-none">
+        <button onclick="withdrawMoney()" class="w-full bg-green-600 py-3 rounded-xl font-bold text-xs">ብር ጠይቅ</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const tg = window.Telegram.WebApp;
+    tg.expand();
+    let balance = 0.00;
+
+    function checkSubscription() {
+      document.getElementById('subModal').style.display = 'none';
+      tg.showAlert("እንኳን ደህና መጡ! ወደ ሚኒ አፑ ገብተዋል 🎉");
+    }
+
+    function switchTab(tab) {
+      ['tasks', 'games', 'wallet'].forEach(t => {
+        document.getElementById('tab-' + t).classList.toggle('hidden', t !== tab);
+        document.getElementById('btn-' + t).className = `flex-1 py-2 text-xs font-bold rounded-lg transition ${t === tab ? 'bg-blue-600 text-white' : 'text-gray-400'}`;
+      });
+    }
+
+    function earnReward(amount, msg) {
+      balance += amount;
+      document.getElementById('balance').innerText = balance.toFixed(2) + " ETB";
+      tg.showAlert("✅ " + msg + " +" + amount + " ETB ተጨምሯል!");
+    }
+
+    function spinWheel() {
+      const win = [2, 5, 10, 20, 50][Math.floor(Math.random() * 5)];
+      balance += win;
+      document.getElementById('balance').innerText = balance.toFixed(2) + " ETB";
+      document.getElementById('spinResult').innerText = `🎉 ${win} ETB አሸንፈዋል!`;
+    }
+
+    function withdrawMoney() {
+      if(balance < 100) tg.showAlert("⚠️ ብር ለማውጣት ቢያንስ 100 ETB ሊኖርዎት ይገባል!");
+      else tg.showAlert("✅ የብር ማውጫ ጥያቄዎ ተልኳል!");
+    }
+  </script>
+</body>
+</html>
